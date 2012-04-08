@@ -46,6 +46,7 @@
             this.Ok = new System.Windows.Forms.Button();
             this.LoadSSHKey = new System.Windows.Forms.Button();
             this.label3 = new System.Windows.Forms.Label();
+            this.fetchBranchesWorker = new System.ComponentModel.BackgroundWorker();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -150,7 +151,7 @@
             this.PersonalRepository.Checked = true;
             this.PersonalRepository.Location = new System.Drawing.Point(6, 19);
             this.PersonalRepository.Name = "PersonalRepository";
-            this.PersonalRepository.Size = new System.Drawing.Size(126, 19);
+            this.PersonalRepository.Size = new System.Drawing.Size(114, 17);
             this.PersonalRepository.TabIndex = 0;
             this.PersonalRepository.TabStop = true;
             this.PersonalRepository.Text = "&Personal repository";
@@ -161,7 +162,7 @@
             this.CentralRepository.AutoSize = true;
             this.CentralRepository.Location = new System.Drawing.Point(6, 42);
             this.CentralRepository.Name = "CentralRepository";
-            this.CentralRepository.Size = new System.Drawing.Size(244, 19);
+            this.CentralRepository.Size = new System.Drawing.Size(213, 17);
             this.CentralRepository.TabIndex = 1;
             this.CentralRepository.Text = "P&ublic repository, no working dir  (--bare)";
             this.CentralRepository.UseVisualStyleBackColor = true;
@@ -200,6 +201,7 @@
             // brachLabel
             // 
             this.brachLabel.AutoSize = true;
+            this.brachLabel.Enabled = false;
             this.brachLabel.Location = new System.Drawing.Point(101, 60);
             this.brachLabel.Name = "brachLabel";
             this.brachLabel.Size = new System.Drawing.Size(47, 15);
@@ -208,12 +210,13 @@
             // 
             // Branches
             // 
+            this.Branches.DisplayMember = "LocalName";
+            this.Branches.Enabled = false;
             this.Branches.FormattingEnabled = true;
             this.Branches.Location = new System.Drawing.Point(154, 57);
             this.Branches.Name = "Branches";
             this.Branches.Size = new System.Drawing.Size(131, 23);
             this.Branches.TabIndex = 9;
-            this.Branches.DropDown += new System.EventHandler(this.Branches_DropDown);
             // 
             // Ok
             // 
@@ -247,6 +250,11 @@
             this.label3.Size = new System.Drawing.Size(77, 15);
             this.label3.TabIndex = 6;
             this.label3.Text = "&Subdirectory:";
+            // 
+            // fetchBranchesWorker
+            // 
+            this.fetchBranchesWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.fetchBranchesWorker_DoWork);
+            this.fetchBranchesWorker.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.fetchBranchesWorker_RunWorkerCompleted);
             // 
             // FormClone
             // 
@@ -303,5 +311,6 @@
         private System.Windows.Forms.Button Ok;
         private System.Windows.Forms.Button LoadSSHKey;
         private System.Windows.Forms.Label label3;
+        private System.ComponentModel.BackgroundWorker fetchBranchesWorker;
     }
 }

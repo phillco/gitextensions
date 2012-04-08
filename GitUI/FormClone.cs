@@ -10,6 +10,7 @@ namespace GitUI
 {
     public partial class FormClone : GitExtensionsForm
     {
+        private bool refetchQueued = false;
         private readonly TranslationString _infoNewRepositoryLocation = 
             new TranslationString("The repository will be cloned to a new directory located here:"  + Environment.NewLine +
                                   "{0}");
@@ -63,6 +64,7 @@ namespace GitUI
             }
 
             FromTextUpdate(null, null);
+            FetchBranches();
         }
 
         private void OkClick(object sender, EventArgs e)
@@ -191,6 +193,7 @@ namespace GitUI
                 _NO_TRANSLATE_NewDirectory.Text = path.Substring(path.LastIndexOfAny(new[] { '\\', '/' }) + 1);
 
             ToTextUpdate(sender, e);
+            FetchBranches();
         }
 
         private void ToTextUpdate(object sender, EventArgs e)
@@ -246,10 +249,29 @@ namespace GitUI
             ToTextUpdate(sender, e);
         }
 
-        private void Branches_DropDown(object sender, EventArgs e)
+        private void FetchBranches()
         {
-            Branches.DisplayMember = "LocalName";
-            Branches.DataSource = Settings.Module.GetRemoteHeads(_NO_TRANSLATE_From.Text, false, true);
+            Branches.Enabled = brachLabel.Enabled = false;
+
+            if (!fetchBranchesWorker.IsBusy)
+                fetchBranchesWorker.RunWorkerAsync(_NO_TRANSLATE_From.Text);
+            else
+                refetchQueued = true;
+        }
+
+        private void fetchBranchesWorker_DoWork(object sender, System.ComponentModel.DoWorkEventArgs e)
+        {
+            refetchQueued = false;
+            e.Result = Settings.Module.GetRemoteHeads(e.Argument.ToString(), false, true);            
+        }
+
+        private void fetchBranchesWorker_RunWorkerCompleted(object sender, System.ComponentModel.RunWorkerCompletedEventArgs e)
+        {
+            Branches.DataSource = e.Result;
+            Branches.Enabled = brachLabel.Enabled = true;
+
+            if (refetchQueued)
+                FetchBranches();
         }
     }
 }
