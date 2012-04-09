@@ -5,12 +5,17 @@ using System.Windows.Forms;
 using GitCommands;
 using GitCommands.Repository;
 using ResourceManager.Translation;
+using System.Collections.Generic;
 
 namespace GitUI
 {
     public partial class FormClone : GitExtensionsForm
     {
+        private bool authenticationNeeded = false;
+        
         private bool refetchQueued = false;
+
+
         private readonly TranslationString _infoNewRepositoryLocation = 
             new TranslationString("The repository will be cloned to a new directory located here:"  + Environment.NewLine +
                                   "{0}");
@@ -65,6 +70,15 @@ namespace GitUI
 
             FromTextUpdate(null, null);
             FetchBranches();
+        }
+
+        /// <summary>Updates the state of the form's controls.</summary>
+        private void UpdateState()
+        {
+            authenticationNeededPanel.Visible = authenticationNeeded;
+            LoadSSHKey.Enabled = GitCommandHelpers.Plink();
+
+            Ok.Enabled = (!authenticationNeeded);
         }
 
         private void OkClick(object sender, EventArgs e)
@@ -164,15 +178,13 @@ namespace GitUI
 
         private void LoadSshKeyClick(object sender, EventArgs e)
         {
-            BrowseForPrivateKey.BrowseAndLoad(this);
+            var key = BrowseForPrivateKey.BrowseAndLoad(this);
+            if (!string.IsNullOrEmpty(key))
+            {
+                LoadSSHKey.Enabled = false;
+                FetchBranches();
+            }
         }
-
-        private void FormCloneLoad(object sender, EventArgs e)
-        {
-            if (!GitCommandHelpers.Plink())
-                LoadSSHKey.Visible = false;
-        }
-
 
         private void FromSelectedIndexChanged(object sender, EventArgs e)
         {
@@ -267,11 +279,25 @@ namespace GitUI
 
         private void fetchBranchesWorker_RunWorkerCompleted(object sender, System.ComponentModel.RunWorkerCompletedEventArgs e)
         {
-            Branches.DataSource = e.Result;
-            Branches.Enabled = brachLabel.Enabled = true;
+            List<GitHead> headers = (List<GitHead>)e.Result;
 
+            if (headers.Count == 1 && IsAuthenticationError(headers[0]))
+                authenticationNeeded = true;
+            else
+            {
+                authenticationNeeded = false;
+                Branches.DataSource = e.Result;
+                Branches.Enabled = brachLabel.Enabled = true;
+            }
+
+            UpdateState();
             if (refetchQueued)
                 FetchBranches();
+        }
+
+        private bool IsAuthenticationError(GitHead head)
+        {
+            return (head.Guid.Contains("FATAL ERROR") && head.Name.Contains("server sent: publickey"));
         }
     }
 }

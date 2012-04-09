@@ -47,7 +47,13 @@
             this.LoadSSHKey = new System.Windows.Forms.Button();
             this.label3 = new System.Windows.Forms.Label();
             this.fetchBranchesWorker = new System.ComponentModel.BackgroundWorker();
+            this.authenticationNeededPanel = new System.Windows.Forms.Panel();
+            this.lblPleaseLoadKey = new System.Windows.Forms.Label();
+            this.lblMustAuthenticate = new System.Windows.Forms.Label();
+            this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.groupBox1.SuspendLayout();
+            this.authenticationNeededPanel.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.SuspendLayout();
             // 
             // Central
@@ -97,7 +103,7 @@
             // FromBrowse
             // 
             this.FromBrowse.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.FromBrowse.Location = new System.Drawing.Point(309, 22);
+            this.FromBrowse.Location = new System.Drawing.Point(375, 22);
             this.FromBrowse.Name = "FromBrowse";
             this.FromBrowse.Size = new System.Drawing.Size(85, 25);
             this.FromBrowse.TabIndex = 2;
@@ -108,7 +114,7 @@
             // ToBrowse
             // 
             this.ToBrowse.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.ToBrowse.Location = new System.Drawing.Point(309, 92);
+            this.ToBrowse.Location = new System.Drawing.Point(375, 92);
             this.ToBrowse.Name = "ToBrowse";
             this.ToBrowse.Size = new System.Drawing.Size(85, 25);
             this.ToBrowse.TabIndex = 5;
@@ -125,7 +131,7 @@
             this._NO_TRANSLATE_To.FormattingEnabled = true;
             this._NO_TRANSLATE_To.Location = new System.Drawing.Point(77, 94);
             this._NO_TRANSLATE_To.Name = "_NO_TRANSLATE_To";
-            this._NO_TRANSLATE_To.Size = new System.Drawing.Size(226, 23);
+            this._NO_TRANSLATE_To.Size = new System.Drawing.Size(292, 23);
             this._NO_TRANSLATE_To.TabIndex = 4;
             this._NO_TRANSLATE_To.DropDown += new System.EventHandler(this.ToDropDown);
             this._NO_TRANSLATE_To.SelectedIndexChanged += new System.EventHandler(this.ToSelectedIndexChanged);
@@ -140,7 +146,7 @@
             this._NO_TRANSLATE_From.FormattingEnabled = true;
             this._NO_TRANSLATE_From.Location = new System.Drawing.Point(77, 23);
             this._NO_TRANSLATE_From.Name = "_NO_TRANSLATE_From";
-            this._NO_TRANSLATE_From.Size = new System.Drawing.Size(226, 23);
+            this._NO_TRANSLATE_From.Size = new System.Drawing.Size(292, 23);
             this._NO_TRANSLATE_From.TabIndex = 1;
             this._NO_TRANSLATE_From.SelectedIndexChanged += new System.EventHandler(this.FromSelectedIndexChanged);
             this._NO_TRANSLATE_From.TextUpdate += new System.EventHandler(this.FromTextUpdate);
@@ -171,7 +177,7 @@
             // 
             this.groupBox1.Controls.Add(this.CentralRepository);
             this.groupBox1.Controls.Add(this.PersonalRepository);
-            this.groupBox1.Location = new System.Drawing.Point(25, 263);
+            this.groupBox1.Location = new System.Drawing.Point(44, 249);
             this.groupBox1.Name = "groupBox1";
             this.groupBox1.Size = new System.Drawing.Size(317, 68);
             this.groupBox1.TabIndex = 11;
@@ -194,7 +200,7 @@
             this.Info.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.Info.Location = new System.Drawing.Point(35, 185);
             this.Info.Name = "Info";
-            this.Info.Size = new System.Drawing.Size(307, 42);
+            this.Info.Size = new System.Drawing.Size(373, 42);
             this.Info.TabIndex = 10;
             this.Info.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
@@ -221,9 +227,9 @@
             // Ok
             // 
             this.Ok.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.Ok.Location = new System.Drawing.Point(297, 365);
+            this.Ok.Location = new System.Drawing.Point(375, 425);
             this.Ok.Name = "Ok";
-            this.Ok.Size = new System.Drawing.Size(97, 25);
+            this.Ok.Size = new System.Drawing.Size(85, 25);
             this.Ok.TabIndex = 1;
             this.Ok.Text = "Clone";
             this.Ok.UseVisualStyleBackColor = true;
@@ -234,11 +240,11 @@
             this.LoadSSHKey.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.LoadSSHKey.Image = global::GitUI.Properties.Resources.putty;
             this.LoadSSHKey.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.LoadSSHKey.Location = new System.Drawing.Point(12, 365);
+            this.LoadSSHKey.Location = new System.Drawing.Point(326, 20);
             this.LoadSSHKey.Name = "LoadSSHKey";
-            this.LoadSSHKey.Size = new System.Drawing.Size(145, 25);
+            this.LoadSSHKey.Size = new System.Drawing.Size(92, 25);
             this.LoadSSHKey.TabIndex = 0;
-            this.LoadSSHKey.Text = "&Load SSH key";
+            this.LoadSSHKey.Text = "&Load";
             this.LoadSSHKey.UseVisualStyleBackColor = true;
             this.LoadSSHKey.Click += new System.EventHandler(this.LoadSshKeyClick);
             // 
@@ -256,13 +262,55 @@
             this.fetchBranchesWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.fetchBranchesWorker_DoWork);
             this.fetchBranchesWorker.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.fetchBranchesWorker_RunWorkerCompleted);
             // 
+            // authenticationNeededPanel
+            // 
+            this.authenticationNeededPanel.Controls.Add(this.lblPleaseLoadKey);
+            this.authenticationNeededPanel.Controls.Add(this.LoadSSHKey);
+            this.authenticationNeededPanel.Controls.Add(this.lblMustAuthenticate);
+            this.authenticationNeededPanel.Controls.Add(this.pictureBox1);
+            this.authenticationNeededPanel.Location = new System.Drawing.Point(25, 336);
+            this.authenticationNeededPanel.Name = "authenticationNeededPanel";
+            this.authenticationNeededPanel.Size = new System.Drawing.Size(437, 60);
+            this.authenticationNeededPanel.TabIndex = 12;
+            this.authenticationNeededPanel.Visible = false;
+            // 
+            // lblPleaseLoadKey
+            // 
+            this.lblPleaseLoadKey.AutoSize = true;
+            this.lblPleaseLoadKey.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblPleaseLoadKey.ForeColor = System.Drawing.SystemColors.ControlDarkDark;
+            this.lblPleaseLoadKey.Location = new System.Drawing.Point(49, 12);
+            this.lblPleaseLoadKey.Name = "lblPleaseLoadKey";
+            this.lblPleaseLoadKey.Size = new System.Drawing.Size(186, 21);
+            this.lblPleaseLoadKey.TabIndex = 31;
+            this.lblPleaseLoadKey.Text = "Authentication needed";
+            // 
+            // lblMustAuthenticate
+            // 
+            this.lblMustAuthenticate.AutoSize = true;
+            this.lblMustAuthenticate.Location = new System.Drawing.Point(50, 33);
+            this.lblMustAuthenticate.Name = "lblMustAuthenticate";
+            this.lblMustAuthenticate.Size = new System.Drawing.Size(226, 15);
+            this.lblMustAuthenticate.TabIndex = 30;
+            this.lblMustAuthenticate.Text = "Please load an SSH key for this repository.";
+            // 
+            // pictureBox1
+            // 
+            this.pictureBox1.Image = global::GitUI.Properties.Resources.pageant;
+            this.pictureBox1.Location = new System.Drawing.Point(11, 13);
+            this.pictureBox1.Name = "pictureBox1";
+            this.pictureBox1.Size = new System.Drawing.Size(32, 32);
+            this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.AutoSize;
+            this.pictureBox1.TabIndex = 0;
+            this.pictureBox1.TabStop = false;
+            // 
             // FormClone
             // 
             this.AcceptButton = this.Ok;
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(414, 402);
-            this.Controls.Add(this.LoadSSHKey);
+            this.ClientSize = new System.Drawing.Size(480, 462);
+            this.Controls.Add(this.authenticationNeededPanel);
             this.Controls.Add(this.Branches);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.Ok);
@@ -283,9 +331,11 @@
             this.Name = "FormClone";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Clone";
-            this.Load += new System.EventHandler(this.FormCloneLoad);
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
+            this.authenticationNeededPanel.ResumeLayout(false);
+            this.authenticationNeededPanel.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -312,5 +362,9 @@
         private System.Windows.Forms.Button LoadSSHKey;
         private System.Windows.Forms.Label label3;
         private System.ComponentModel.BackgroundWorker fetchBranchesWorker;
+        private System.Windows.Forms.Panel authenticationNeededPanel;
+        private System.Windows.Forms.PictureBox pictureBox1;
+        private System.Windows.Forms.Label lblPleaseLoadKey;
+        private System.Windows.Forms.Label lblMustAuthenticate;
     }
 }
