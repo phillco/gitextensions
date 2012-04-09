@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Security.Permissions;
 using System.Text;
 using GitUIPluginInterfaces;
@@ -14,9 +15,8 @@ namespace GitCommands
         private readonly object processLock = new object();
         public SetupStartInfo SetupStartInfoCallback { get; set; }
 
-
         [PermissionSet(SecurityAction.Demand, Name = "FullTrust")]
-        public Process CmdStartProcess(string cmd, string arguments)
+        public Process CmdStartProcess(string cmd, string arguments, string workingDir)
         {
             try
             {
@@ -33,7 +33,7 @@ namespace GitCommands
                 process.StartInfo.CreateNoWindow = (!ssh && !Settings.ShowGitCommandLine);
                 process.StartInfo.FileName = cmd;
                 process.StartInfo.Arguments = arguments;
-                process.StartInfo.WorkingDirectory = Settings.WorkingDir;
+                process.StartInfo.WorkingDirectory = workingDir;
                 process.StartInfo.WindowStyle = ProcessWindowStyle.Normal;
                 process.StartInfo.LoadUserProfile = true;
                 if (SetupStartInfoCallback != null)
@@ -66,6 +66,12 @@ namespace GitCommands
             {
                 throw new ApplicationException("Error running command: '" + cmd + " " + arguments, ex);
             }
+        }
+
+        [PermissionSet(SecurityAction.Demand, Name = "FullTrust")]
+        public Process CmdStartProcess(string cmd, string arguments)
+        {
+            return CmdStartProcess(cmd, arguments, Settings.WorkingDir);
         }
 
         public void Kill()
@@ -102,6 +108,11 @@ namespace GitCommands
         public string RunGit(string arguments)
         {
             return Settings.Module.RunGitCmd(arguments);
+        }
+
+        public string RunBatchFile(string batchFile)
+        {
+            return Settings.Module.RunBatchFile(batchFile);
         }
 
         public event DataReceivedEventHandler DataReceived;

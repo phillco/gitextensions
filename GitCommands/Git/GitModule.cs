@@ -79,8 +79,7 @@ namespace GitCommands
             if (Directory.Exists(dir + Settings.PathSeparator.ToString() + ".git") || File.Exists(dir + Settings.PathSeparator.ToString() + ".git"))
                 return true;
 
-            return !dir.Contains(".git") &&
-                   Directory.Exists(dir + Settings.PathSeparator.ToString() + "info") &&
+            return Directory.Exists(dir + Settings.PathSeparator.ToString() + "info") &&
                    Directory.Exists(dir + Settings.PathSeparator.ToString() + "objects") &&
                    Directory.Exists(dir + Settings.PathSeparator.ToString() + "refs");
         }
@@ -336,13 +335,14 @@ namespace GitCommands
         {
             return RunCmdByte(cmd, arguments, null, out output, out error);
         }
+
         private int RunCmdByte(string cmd, string arguments, string stdInput, out byte[] output, out byte[] error)
         {
             try
             {
                 GitCommandHelpers.SetEnvironmentVariable();
                 arguments = arguments.Replace("$QUOTE$", "\\\"");
-                int exitCode = GitCommandHelpers.CreateAndStartProcess(arguments, cmd, out output, out error, stdInput);
+                int exitCode = GitCommandHelpers.CreateAndStartProcess(arguments, cmd, _workingdir, out output, out error, stdInput);
                 return exitCode;
             }
             catch (Win32Exception)
@@ -350,7 +350,6 @@ namespace GitCommands
                 output = error = null;
                 return 1;
             }
-
         }
 
         public string RunGitCmd(string arguments, out int exitCode, string stdInput)
@@ -388,6 +387,19 @@ namespace GitCommands
         public string RunGitCmd(string arguments, Encoding encoding)
         {
             return RunGitCmd(arguments, null, encoding);
+        }
+
+        public string RunBatchFile(string batchFile)
+        {
+            string tempFileName = Path.ChangeExtension(Path.GetTempFileName(), ".cmd");
+            using (var writer = new StreamWriter(tempFileName))
+            {
+                writer.WriteLine("@prompt $G");
+                writer.Write(batchFile);
+            }
+            string result = Settings.Module.RunCmd("cmd.exe", "/C \"" + tempFileName + "\"");
+            File.Delete(tempFileName);
+            return result;
         }
 
         [PermissionSetAttribute(SecurityAction.Demand, Name = "FullTrust")]
@@ -662,7 +674,10 @@ namespace GitCommands
                     if (line.StartsWith("gitdir:"))
                     {
                         string path = line.Substring(7).Trim().Replace('/', '\\');
-                        return path + Settings.PathSeparator.ToString();
+                        if (Path.IsPathRooted(path))
+                            return path + Settings.PathSeparator.ToString();
+                        else
+                            return Path.GetFullPath(Path.Combine(repositoryPath, path + Settings.PathSeparator.ToString()));
                     }
                 }
             }
@@ -1289,7 +1304,6 @@ namespace GitCommands
                             else
                                 patchFile.Date = line.Substring(6).Trim();
 
-
                         if (line.StartsWith("Subject: ")) patchFile.Subject = line.Substring(9).Trim();
 
                         if (!string.IsNullOrEmpty(patchFile.Author) &&
@@ -1505,7 +1519,7 @@ namespace GitCommands
             var arguments = string.Format("diff{0} -M -C \"{1}\" \"{2}\" -- {3} {4}", extraDiffArguments, to, from, fileName, oldFileName);
             patchManager.LoadPatch(this.RunCachableCmd(Settings.GitCommand, arguments, encoding), false);
 
-            return patchManager.Patches.Count > 0 ? patchManager.Patches[0] : null;
+            return patchManager.Patches.Count > 0 ? patchManager.Patches[patchManager.Patches.Count-1] : null;
         }
 
         public Patch GetSingleDiff(string @from, string to, string fileName, string extraDiffArguments, Encoding encoding)
@@ -1523,6 +1537,25 @@ namespace GitCommands
             patchManager.LoadPatch(this.RunCachableCmd(Settings.GitCommand, arguments), false);
 
             return patchManager.Patches;
+        }
+
+        public string GetStatusText(bool untracked)
+        {
+            string cmd = "status -s";
+            if (untracked)
+                cmd = cmd + " -u";
+            return RunGitCmd(cmd);
+        }
+
+        public string GetDiffFilesText(string from, string to)
+        {
+            return GetDiffFilesText(from, to, false);
+        }
+
+        public string GetDiffFilesText(string from, string to, bool noCache)
+        {
+            string cmd = "diff -M -C --name-status \"" + to + "\" \"" + from + "\"";
+            return noCache ? RunGitCmd(cmd) : this.RunCachableCmd(Settings.GitCommand, cmd, Settings.SystemEncoding);
         }
 
         public List<GitItemStatus> GetDiffFiles(string from, string to)

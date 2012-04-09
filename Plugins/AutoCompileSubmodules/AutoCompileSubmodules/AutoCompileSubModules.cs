@@ -7,7 +7,7 @@ using GitUIPluginInterfaces;
 
 namespace AutoCompileSubmodules
 {
-    public class AutoCompileSubModules : IGitPlugin
+    public class AutoCompileSubModules : IGitPluginForRepository
     {
         private const string MsBuildPath = @"C:\Windows\Microsoft.NET\Framework\v3.5\msbuild.exe";
 
@@ -34,7 +34,6 @@ namespace AutoCompileSubmodules
 
             // Connect to events
             gitUiCommands.PostUpdateSubmodules += GitUiCommandsPostUpdateSubmodules;
-            gitUiCommands.PostUpdateSubmodulesRecursive += GitUiCommandsPostUpdateSubmodulesRecursive;
         }
 
         public void Execute(GitUIBaseEventArgs e)
@@ -80,14 +79,6 @@ namespace AutoCompileSubmodules
         {
             return File.Exists(MsBuildPath) ? MsBuildPath : "";
         }
-
-        private void GitUiCommandsPostUpdateSubmodulesRecursive(object sender, GitUIBaseEventArgs e)
-        {
-            if (Settings.GetSetting("Enabled (true / false)")
-                .Equals("true", StringComparison.InvariantCultureIgnoreCase))
-                Execute(e);
-        }
-
 
         /// <summary>
         ///   Automaticly compile all solution files found in any submodule

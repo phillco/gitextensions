@@ -148,7 +148,7 @@ namespace GitCommands
                    (arguments.Contains("pull"));
         }
 
-        internal static int CreateAndStartProcess(string arguments, string cmd, out byte[] stdOutput, out byte[] stdError, string stdInput)
+        internal static int CreateAndStartProcess(string arguments, string cmd, string workDir, out byte[] stdOutput, out byte[] stdError, string stdInput)
         {
             if (string.IsNullOrEmpty(cmd))
             {
@@ -163,7 +163,7 @@ namespace GitCommands
             startInfo.CreateNoWindow = true;
             startInfo.FileName = cmd;
             startInfo.Arguments = arguments;
-            startInfo.WorkingDirectory = Settings.WorkingDir;
+            startInfo.WorkingDirectory = workDir;
             startInfo.LoadUserProfile = true;
 
             using (var process = Process.Start(startInfo))
@@ -310,21 +310,13 @@ namespace GitCommands
         {
             return "tag -d \"" + tagName + "\"";
         }
-
-        public static string SubmoduleInitCmd(string name)
-        {
-            if (string.IsNullOrEmpty(name))
-                return "submodule init --recursive";
-
-            return "submodule update --init \"" + name.Trim() + "\"";
-        }
 		
         public static string SubmoduleUpdateCmd(string name)
         {
             if (string.IsNullOrEmpty(name))
                 return "submodule update --init --recursive";
 
-            return "submodule update \"" + name.Trim() + "\"";
+            return "submodule update --init --recursive \"" + name.Trim() + "\"";
         }
 
         public static string SubmoduleSyncCmd(string name)
@@ -975,6 +967,9 @@ namespace GitCommands
                     }
                 }
                 sb.AppendLine("Submodule " + module + " Change");
+                string fromHash = null;
+                string toHash = null;
+                bool dirtyFlag = false;
                 while ((line = reader.ReadLine()) != null)
                 {
                     if (line.Contains("Subproject"))
@@ -987,12 +982,19 @@ namespace GitCommands
                         if (pos >= 0)
                             hash = line.Substring(pos + commit.Length);
                         bool bdirty = hash.EndsWith("-dirty");
+                        dirtyFlag |= bdirty;
                         hash = hash.Replace("-dirty", "");
                         string dirty = !bdirty ? "" : " (dirty)";
                         if (c == '-')
+                        {
+                            fromHash = hash;
                             sb.AppendLine("From:\t" + hash + dirty);
+                        }
                         else if (c == '+')
+                        {
+                            toHash = hash;
                             sb.AppendLine("To:\t\t" + hash + dirty);
+                        }
 
                         string path = Settings.Module.GetSubmoduleFullPath(module);
                         GitModule gitmodule = new GitModule(path);
@@ -1007,6 +1009,25 @@ namespace GitCommands
                                 var lines = commitData.Body.Trim(delim).Split(new string[] {"\r\n"}, 0);
                                 foreach (var curline in lines)
                                     sb.AppendLine("\t\t" + curline);
+                            }
+                            if (fromHash != null && toHash != null)
+                            {
+                                if (dirtyFlag)
+                                {
+                                    string status = gitmodule.GetStatusText(false);
+                                    if (!String.IsNullOrEmpty(status))
+                                    {
+                                        sb.AppendLine("\nStatus:");
+                                        sb.Append(status);
+                                    }
+                                }
+
+                                string diffs = gitmodule.GetDiffFilesText(fromHash, toHash);
+                                if (!String.IsNullOrEmpty(diffs))
+                                {
+                                    sb.AppendLine("\nDifferences:");
+                                    sb.Append(diffs);
+                                }
                             }
                         }
                         else

@@ -133,20 +133,8 @@ namespace GitUI
         public event GitUIEventHandler PreUpdateSubmodules;
         public event GitUIEventHandler PostUpdateSubmodules;
 
-        public event GitUIEventHandler PreUpdateSubmodulesRecursive;
-        public event GitUIEventHandler PostUpdateSubmodulesRecursive;
-
-        public event GitUIEventHandler PreInitSubmodules;
-        public event GitUIEventHandler PostInitSubmodules;
-
-        public event GitUIEventHandler PreInitSubmodulesRecursive;
-        public event GitUIEventHandler PostInitSubmodulesRecursive;
-
         public event GitUIEventHandler PreSyncSubmodules;
         public event GitUIEventHandler PostSyncSubmodules;
-
-        public event GitUIEventHandler PreSyncSubmodulesRecursive;
-        public event GitUIEventHandler PostSyncSubmodulesRecursive;
 
         public string GitCommand(string arguments)
         {
@@ -188,6 +176,25 @@ namespace GitUI
             }
 
             return true;
+        }
+
+        public bool StartBatchFileProcessDialog(IWin32Window owner, string batchFile)
+        {
+            string tempFileName = Path.ChangeExtension(Path.GetTempFileName(), ".cmd");
+            using (var writer = new StreamWriter(tempFileName))
+            {
+                writer.WriteLine("@prompt $G");
+                writer.Write(batchFile);
+            }
+            var process = new FormProcess("cmd.exe", "/C \"" + tempFileName + "\"");
+            bool result = process.ShowDialog(owner) == DialogResult.OK;
+            File.Delete(tempFileName);
+            return true;
+        }
+
+        public bool StartBatchFileProcessDialog(string batchFile)
+        {
+            return StartBatchFileProcessDialog(null, batchFile);
         }
 
         public bool StartCommandLineProcessDialog(GitCommand cmd, Form parentForm)
@@ -300,7 +307,7 @@ namespace GitUI
         public void Stash(IWin32Window owner)
         {
             var arguments = "stash save";
-            if (Settings.IncludeUntrackedFilesInAutoStash)
+            if (Settings.IncludeUntrackedFilesInAutoStash && GitCommandHelpers.VersionInUse.StashUntrackedFilesSupported)
                 arguments += " -u";
 
             new FormProcess(arguments).ShowDialog(owner);
@@ -1008,71 +1015,6 @@ namespace GitUI
             return StartUpdateSubmodulesDialog(null);
         }
 
-        public bool StartUpdateSubmodulesRecursiveDialog(IWin32Window owner)
-        {
-            if (!RequiresValidWorkingDir())
-                return false;
-
-            if (!InvokeEvent(PreUpdateSubmodulesRecursive))
-                return true;
-
-            var process = new FormProcess(GitCommandHelpers.SubmoduleUpdateCmd(""));
-            process.ShowDialog(owner);
-            ForEachSubmodulesRecursive(GitCommandHelpers.SubmoduleUpdateCmd(""));
-
-            InvokeEvent(PostUpdateSubmodulesRecursive);
-
-            return true;
-        }
-
-        public bool StartUpdateSubmodulesRecursiveDialog()
-        {
-            return StartUpdateSubmodulesRecursiveDialog(null);
-        }
-
-        public bool StartInitSubmodulesDialog(IWin32Window owner)
-        {
-            if (!RequiresValidWorkingDir())
-                return false;
-
-            if (!InvokeEvent(PreInitSubmodules))
-                return true;
-
-            var process = new FormProcess(GitCommandHelpers.SubmoduleInitCmd(""));
-            process.ShowDialog(owner);
-
-            InvokeEvent(PostInitSubmodules);
-
-            return true;
-        }
-
-        public bool StartInitSubmodulesDialog()
-        {
-            return StartInitSubmodulesDialog(null);
-        }
-
-        public bool StartInitSubmodulesRecursiveDialog(IWin32Window owner)
-        {
-            if (!RequiresValidWorkingDir())
-                return false;
-
-            if (!InvokeEvent(PreInitSubmodulesRecursive))
-                return true;
-
-            var process = new FormProcess(GitCommandHelpers.SubmoduleInitCmd(""));
-            process.ShowDialog(owner);
-            ForEachSubmodulesRecursive(GitCommandHelpers.SubmoduleInitCmd(""));
-
-            InvokeEvent(PostInitSubmodulesRecursive);
-
-            return true;
-        }
-
-        public bool StartInitSubmodulesRecursiveDialog()
-        {
-            return StartInitSubmodulesRecursiveDialog(null);
-        }
-
         public bool StartSyncSubmodulesDialog(IWin32Window owner)
         {
             if (!RequiresValidWorkingDir())
@@ -1092,28 +1034,6 @@ namespace GitUI
         public bool StartSyncSubmodulesDialog()
         {
             return StartSyncSubmodulesDialog(null);
-        }
-
-        public bool StartSyncSubmodulesRecursiveDialog(IWin32Window owner)
-        {
-            if (!RequiresValidWorkingDir())
-                return false;
-
-            if (!InvokeEvent(PreSyncSubmodulesRecursive))
-                return true;
-
-            var process = new FormProcess(GitCommandHelpers.SubmoduleSyncCmd(""));
-            process.ShowDialog(owner);
-            ForEachSubmodulesRecursive(GitCommandHelpers.SubmoduleSyncCmd(""));
-
-            InvokeEvent(PostSyncSubmodulesRecursive);
-
-            return true;
-        }
-
-        public bool StartSyncSubmodulesRecursiveDialog()
-        {
-            return StartSyncSubmodulesRecursiveDialog(null);
         }
 
         public bool StartPluginSettingsDialog(IWin32Window owner)
@@ -1152,7 +1072,7 @@ namespace GitUI
             return StartBrowseDialog(null, filter);
         }
 
-        public bool StartFileHistoryDialog(IWin32Window owner, string fileName, GitRevision revision)
+        public bool StartFileHistoryDialog(IWin32Window owner, string fileName, GitRevision revision, bool filterByRevision, bool showBlame)
         {
             if (!RequiresValidWorkingDir())
                 return false;
@@ -1160,7 +1080,9 @@ namespace GitUI
             if (!InvokeEvent(PreFileHistory))
                 return false;
 
-            var form = new FormFileHistory(fileName, revision);
+            var form = new FormFileHistory(fileName, revision, filterByRevision);
+            if (showBlame)
+                form.SelectBlameTab();
             form.ShowDialog(owner);
 
             InvokeEvent(PostFileHistory);
@@ -1168,14 +1090,24 @@ namespace GitUI
             return false;
         }
 
+        public bool StartFileHistoryDialog(IWin32Window owner, string fileName, GitRevision revision, bool filterByRevision)
+        {           
+            return StartFileHistoryDialog(owner, fileName, revision, filterByRevision, false);
+        }
+
+        public bool StartFileHistoryDialog(IWin32Window owner, string fileName, GitRevision revision)
+        {
+            return StartFileHistoryDialog(owner, fileName, revision, false);
+        }
+
         public bool StartFileHistoryDialog(IWin32Window owner, string fileName)
         {
-            return StartFileHistoryDialog(owner, fileName, null);
+            return StartFileHistoryDialog(owner, fileName, null, false);
         }
 
         public bool StartFileHistoryDialog(string fileName, GitRevision revision)
         {
-            return StartFileHistoryDialog(null, fileName, revision);
+            return StartFileHistoryDialog(null, fileName, revision, false);
         }
 
         public bool StartFileHistoryDialog(string fileName)
@@ -1259,37 +1191,7 @@ namespace GitUI
         {
             return StartEditGitAttributesDialog(null);
         }
-
-        private static void ForEachSubmodulesRecursive(IWin32Window owner, string cmd)
-        {
-            var oldworkingdir = Settings.WorkingDir;
-
-            foreach (GitSubmodule submodule in (new GitCommandsInstance()).GetSubmodules())
-            {
-                if (string.IsNullOrEmpty(submodule.LocalPath))
-                    continue;
-
-                Settings.WorkingDir = oldworkingdir + submodule.LocalPath;
-
-                if (Settings.WorkingDir != oldworkingdir && File.Exists(Settings.WorkingDir + ".gitmodules"))
-                {
-                    var process = new FormProcess(cmd);
-                    process.ShowDialog(owner);
-
-                    ForEachSubmodulesRecursive(owner, cmd);
-                }
-
-                Settings.WorkingDir = oldworkingdir;
-            }
-
-            Settings.WorkingDir = oldworkingdir;
-        }
-
-        private static void ForEachSubmodulesRecursive(string cmd)
-        {
-            ForEachSubmodulesRecursive(null, cmd);
-        }
-
+        
         private bool InvokeEvent(GitUIEventHandler gitUIEventHandler)
         {
             return InvokeEvent(this, gitUIEventHandler);

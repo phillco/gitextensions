@@ -36,7 +36,6 @@ namespace GitUIPluginInterfaces
         event GitUIEventHandler PostStash;
         event GitUIEventHandler PostSubmodulesEdit;
         event GitUIEventHandler PostUpdateSubmodules;
-        event GitUIEventHandler PostUpdateSubmodulesRecursive;
         event GitUIEventHandler PostVerifyDatabase;
         event GitUIEventHandler PostViewPatch;
         event GitUIEventHandler PreAddFiles;
@@ -68,7 +67,6 @@ namespace GitUIPluginInterfaces
         event GitUIEventHandler PreStash;
         event GitUIEventHandler PreSubmodulesEdit;
         event GitUIEventHandler PreUpdateSubmodules;
-        event GitUIEventHandler PreUpdateSubmodulesRecursive;
         event GitUIEventHandler PreVerifyDatabase;
         event GitUIEventHandler PreViewPatch;
 
@@ -85,6 +83,7 @@ namespace GitUIPluginInterfaces
         bool StartCloneDialog();
         bool StartCloneDialog(string url);
         bool StartCommandLineProcessDialog(string command, string arguments);
+        bool StartBatchFileProcessDialog(string batchFile);
         bool StartCommitDialog();
         bool StartCompareRevisionsDialog();
         bool StartCreateBranchDialog();
@@ -109,7 +108,6 @@ namespace GitUIPluginInterfaces
         bool StartStashDialog();
         bool StartSubmodulesDialog();
         bool StartUpdateSubmodulesDialog();
-        bool StartUpdateSubmodulesRecursiveDialog();
         bool StartVerifyDatabaseDialog();
         bool StartViewPatchDialog();
     }
